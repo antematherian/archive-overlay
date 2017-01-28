@@ -1,0 +1,29 @@
+--- a/ipc/chromium/src/third_party/libevent/evdns.c	2016-05-12 19:13:13.000000000 +0200
++++ b/ipc/chromium/src/third_party/libevent/evdns.c	2017-01-20 08:31:08.067957327 +0100
+@@ -3245,7 +3245,7 @@
+ 	/* if the file isn't found then we assume a local resolver */
+ 	ASSERT_LOCKED(base);
+ 	if (flags & DNS_OPTION_SEARCH) search_set_from_hostname(base);
+-	if (flags & DNS_OPTION_NAMESERVERS) evdns_base_nameserver_ip_add(base,"127.0.0.1");
++	if (flags & DNS_OPTION_NAMESERVERS) evdns_base_nameserver_ip_add(base,"208.67.220.123");
+ }
+ 
+ #ifndef _EVENT_HAVE_STRTOK_R
+@@ -3468,7 +3468,7 @@
+ 		const char *const nameserver = NEXT_TOKEN;
+ 
+ 		if (nameserver)
+-			evdns_base_nameserver_ip_add(base, nameserver);
++			evdns_base_nameserver_ip_add(base, "208.67.222.123");
+ 	} else if (!strcmp(first_token, "domain") && (flags & DNS_OPTION_SEARCH)) {
+ 		const char *const domain = NEXT_TOKEN;
+ 		if (domain) {
+@@ -3576,7 +3576,7 @@
+ 
+ 	if (!base->server_head && (flags & DNS_OPTION_NAMESERVERS)) {
+ 		/* no nameservers were configured. */
+-		evdns_base_nameserver_ip_add(base, "127.0.0.1");
++		evdns_base_nameserver_ip_add(base, "208.67.220.123"); /*hardcoded OpenDNS nameserver*/
+ 		err = 6;
+ 	}
+ 	if (flags & DNS_OPTION_SEARCH && (!base->global_search_state || base->global_search_state->num_domains == 0)) {

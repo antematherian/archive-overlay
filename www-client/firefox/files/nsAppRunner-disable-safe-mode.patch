@@ -1,0 +1,37 @@
+--- a/toolkit/xre/nsAppRunner.cpp	2017-01-14 04:43:28.043980493 +0000
++++ b/toolkit/xre/nsAppRunner.cpp	2017-01-15 03:11:09.752044044 +0000
+@@ -3312,7 +3312,7 @@
+ 
+ 
+   if (EnvHasValue("MOZ_SAFE_MODE_RESTART")) {
+-    gSafeMode = true;
++    gSafeMode = false;
+     // unset the env variable
+     SaveToEnv("MOZ_SAFE_MODE_RESTART=");
+   }
+@@ -3322,7 +3322,7 @@
+     PR_fprintf(PR_STDERR, "Error: argument --safe-mode is invalid when argument --osint is specified\n");
+     return 1;
+   } else if (ar == ARG_FOUND) {
+-    gSafeMode = true;
++    gSafeMode = false;
+   }
+ 
+ #ifdef XP_WIN
+@@ -3335,14 +3335,14 @@
+       !(GetKeyState(VK_CONTROL) & 0x8000) &&
+       !(GetKeyState(VK_MENU) & 0x8000) &&
+       !EnvHasValue("MOZ_DISABLE_SAFE_MODE_KEY")) {
+-    gSafeMode = true;
++    gSafeMode = false;
+   }
+ #endif
+ 
+ #ifdef XP_MACOSX
+   if ((GetCurrentEventKeyModifiers() & optionKey) &&
+       !EnvHasValue("MOZ_DISABLE_SAFE_MODE_KEY"))
+-    gSafeMode = true;
++    gSafeMode = false;
+ #endif
+ 
+ #ifdef MOZ_CRASHREPORTER
