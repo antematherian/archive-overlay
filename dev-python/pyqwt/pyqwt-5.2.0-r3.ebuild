@@ -32,7 +32,9 @@ src_prepare() {
 	sed -i -e "s|configuration.qt_dir, 'bin'|'$(qt4_get_bindir)'|" configure.py || die
 	cd "${S}"
 	cd ..
-	EPATCH_SOURCE="${FILESDIR}/sip-4.19-compat" EPATCH_SUFFIX="patch" \
+	cp ${FILESDIR}/sip-4.19-compat.tar.xz .
+	unpack ./sip-4.19-compat.tar.xz
+	EPATCH_SOURCE="./sip-4.19-compat" EPATCH_SUFFIX="patch" \
 		EPATCH_FORCE="yes" epatch
 	python_copy_sources
 	append-flags -fPIC
