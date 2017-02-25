@@ -93,8 +93,8 @@ pkg_pretend() {
 	if use kernel_linux && kernel_is ge 4 11; then
 		ewarn "Gentoo supports kernels which are supported by NVIDIA"
 		ewarn "which are limited to the following kernels:"
-		ewarn "<sys-kernel/gentoo-sources-4.10"
-		ewarn "<sys-kernel/vanilla-sources-4.10"
+		ewarn "<sys-kernel/gentoo-sources-4.11"
+		ewarn "<sys-kernel/vanilla-sources-4.11"
 		ewarn ""
 		ewarn "You are free to utilize epatch_user to provide whatever"
 		ewarn "support you feel is appropriate, but will not receive"
@@ -176,7 +176,9 @@ src_prepare() {
 		ewarn "need support with these patches, contact the PaX team."
 		eapply "${FILESDIR}"/${PN}-375.20-pax.patch
 	fi
-	epatch "${FILESDIR}/${PN}-378.13-kernel_4.10.patch"
+	if use kernel_linux && kernel_is ge 4 10; then
+		epatch "${FILESDIR}/${PN}-378.13-kernel_4.10.patch"
+	fi
 	# Allow user patches so they can support RC kernels and whatever else
 	eapply_user
 }
