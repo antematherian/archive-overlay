@@ -176,7 +176,7 @@ src_prepare() {
 		ewarn "need support with these patches, contact the PaX team."
 		eapply "${FILESDIR}"/${PN}-375.20-pax.patch
 	fi
-	if use kernel_linux && kernel_is ge 4 10; then
+	if use kernel_linux; then
 		epatch "${FILESDIR}/${PN}-378.13-kernel_4.10.patch"
 	fi
 	# Allow user patches so they can support RC kernels and whatever else
