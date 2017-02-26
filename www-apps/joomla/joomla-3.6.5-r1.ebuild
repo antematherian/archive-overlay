@@ -18,9 +18,9 @@ KEYWORDS="~amd64 ~ppc ~sparc ~x86"
 S="${WORKDIR}"
 need_httpd_cgi
 
-RDEPEND=">=dev-lang/php-5.3.10:*[json,zlib,xml,session,pcre]
+RDEPEND=">=dev-lang/php-5.3.10[json,zlib,xml,session,pcre]
 	virtual/httpd-php
-	|| ( dev-lang/php:*[mysql,pdo] dev-lang/php:*[mysqli] dev-lang/php:*[postgres] )"
+	|| ( dev-lang/php[mysql,pdo], dev-lang/php[mysqli], dev-lang/php[postgres] )"
 
 src_install () {
 	webapp_src_preinst
