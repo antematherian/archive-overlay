@@ -92,7 +92,7 @@ src_prepare() {
 	default
 	if use server; then
 		eapply "${FILESDIR}/${PN}-1.7.1-xserver119-compat.patch"
-		eapply "${FILESDIR}/${PN}-1.7.1-inetd-xserver119.patch"
+		eapply "${FILESDIR}/${PN}-1.7.1-xserver119-inetd.patch"
 		cd unix/xserver || die
 		eapply "${FILESDIR}/xserver119.patch"
 		eautoreconf
