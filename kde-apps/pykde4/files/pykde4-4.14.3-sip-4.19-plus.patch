@@ -1,0 +1,924 @@
+From c6d8bf67229efe5b15915b906e5fdd859260ba83 Mon Sep 17 00:00:00 2001
+From: Rex Dieter <rdieter@math.unl.edu>
+Date: Thu, 26 Jan 2017 15:13:27 -0600
+Subject: pykde4 FTBFS against sip-4.19+ (#1416859) disable akonadi support
+ (f24+)
+
+---
+ 0001-use-LIB_PYTHON-realpath.patch          |  31 ++
+ 0002-Add-some-missing-link-libraries.patch  |  60 +++
+ 0003-Fix-build-with-sip-4.19.patch          | 599 ++++++++++++++++++++++++++++
+ pykde4-4.12.3-python_library_realpath.patch |  13 -
+ pykde4-4.14.3-missing_symbols.patch         |  21 -
+ pykde4.spec                                 |  36 +-
+ 6 files changed, 720 insertions(+), 40 deletions(-)
+ create mode 100644 0001-use-LIB_PYTHON-realpath.patch
+ create mode 100644 0002-Add-some-missing-link-libraries.patch
+ create mode 100644 0003-Fix-build-with-sip-4.19.patch
+ delete mode 100644 pykde4-4.12.3-python_library_realpath.patch
+ delete mode 100644 pykde4-4.14.3-missing_symbols.patch
+
+diff --git a/0001-use-LIB_PYTHON-realpath.patch b/0001-use-LIB_PYTHON-realpath.patch
+new file mode 100644
+index 0000000..85ad4bc
+--- /dev/null
++++ b/0001-use-LIB_PYTHON-realpath.patch
+@@ -0,0 +1,31 @@
++From 34bed3ceb7cd2bb43e67acce97f4cc3e8bbc1c1d Mon Sep 17 00:00:00 2001
++From: Rex Dieter <rdieter@math.unl.edu>
++Date: Tue, 11 Mar 2014 09:51:17 -0500
++Subject: [PATCH 1/3] use LIB_PYTHON realpath
++
++Use GET_FILENAME_COMPONENT( ... REALPATH). PYTHON_LIBRARY as returned
++by cmake, whose target is often a symlink.  Some distro packaging
++reserves such library symlinks for -devel and not runtime.
++
++REVIEW: 116719
++---
++ kpythonpluginfactory/CMakeLists.txt | 3 ++-
++ 1 file changed, 2 insertions(+), 1 deletion(-)
++
++diff --git a/kpythonpluginfactory/CMakeLists.txt b/kpythonpluginfactory/CMakeLists.txt
++index c24160e..a777dac 100644
++--- a/kpythonpluginfactory/CMakeLists.txt
+++++ b/kpythonpluginfactory/CMakeLists.txt
++@@ -3,7 +3,8 @@
++ set(kpythonpluginfactory_SRCS
++     kpythonpluginfactory.cpp)
++ 
++-GET_FILENAME_COMPONENT(LIB_PYTHON ${PYTHON_LIBRARIES} NAME)
+++GET_FILENAME_COMPONENT(PYTHON_LIBRARY_REALPATH "${PYTHON_LIBRARY}" REALPATH)
+++GET_FILENAME_COMPONENT(LIB_PYTHON ${PYTHON_LIBRARY_REALPATH} NAME)
++ ADD_DEFINITIONS(-DLIB_PYTHON="${LIB_PYTHON}")
++ ADD_DEFINITIONS(-DKDE_DEFAULT_DEBUG_AREA=15000)
++ 
++-- 
++2.9.3
++
+diff --git a/0002-Add-some-missing-link-libraries.patch b/0002-Add-some-missing-link-libraries.patch
+new file mode 100644
+index 0000000..00283cc
+--- /dev/null
++++ b/0002-Add-some-missing-link-libraries.patch
+@@ -0,0 +1,60 @@
++From b0137f694f946c7f10ac2863a71b4cdeda15eb87 Mon Sep 17 00:00:00 2001
++From: Wolfgang Bauer <wbauer@tmo.at>
++Date: Wed, 14 Sep 2016 23:54:40 +0200
++Subject: [PATCH 2/3] Add some missing(?) link libraries
++
++This fixes the following build errors in openSUSE Factory:
++
++CMakeFiles/python_module_PyKDE4_dnssd.dir/sip/dnssd/sipdnssdpart2.cpp.o:
++In function `meth_DNSSD_ServiceBrowser_resolveHostName':
++/home/abuild/rpmbuild/BUILD/pykde4-4.14.3/build/sip/dnssd/sipdnssdpart2.cpp:408:
++undefined reference to `QHostAddress::QHostAddress(QHostAddress
++const&)'
++/home/abuild/rpmbuild/BUILD/pykde4-4.14.3/build/sip/dnssd/sipdnssdpart2.cpp:408:
++undefined reference to `QHostAddress::~QHostAddress()'
++collect2: error: ld returned 1 exit status
++...
++CMakeFiles/python_module_PyKDE4_kio.dir/sip/kio/sipkiopart3.cpp.o: In
++function `meth_KFilePlacesModel_deviceForIndex':
++/home/abuild/rpmbuild/BUILD/pykde4-4.14.3/build/sip/kio/sipkiopart3.cpp:18560:
++undefined reference to `Solid::Device::Device(Solid::Device const&)'
++/home/abuild/rpmbuild/BUILD/pykde4-4.14.3/build/sip/kio/sipkiopart3.cpp:18560:
++undefined reference to `Solid::Device::~Device()'
++CMakeFiles/python_module_PyKDE4_kio.dir/sip/kio/sipkiopart4.cpp.o: In
++function `meth_KDeviceListModel_deviceForIndex':
++/home/abuild/rpmbuild/BUILD/pykde4-4.14.3/build/sip/kio/sipkiopart4.cpp:27090:
++undefined reference to `Solid::Device::Device(Solid::Device const&)'
++/home/abuild/rpmbuild/BUILD/pykde4-4.14.3/build/sip/kio/sipkiopart4.cpp:27090:
++undefined reference to `Solid::Device::~Device()'
++collect2: error: ld returned 1 exit status
++
++REVIEW: 127705
++---
++ CMakeLists.txt | 4 ++--
++ 1 file changed, 2 insertions(+), 2 deletions(-)
++
++diff --git a/CMakeLists.txt b/CMakeLists.txt
++index b0768cf..b919d1b 100644
++--- a/CMakeLists.txt
+++++ b/CMakeLists.txt
++@@ -166,7 +166,7 @@ add_sip_python_module(PyKDE4.kdeui sip/kdeui/kdeuimod.sip ${KDE4_KDEUI_LIBS} ${Q
++ 
++ file(GLOB kio_files_sip sip/kio/*.sip)
++ set(SIP_EXTRA_FILES_DEPEND ${kio_files_sip})
++-add_sip_python_module(PyKDE4.kio sip/kio/kiomod.sip ${KDE4_KIO_LIBS} ${KDE4_KFILE_LIBS})
+++add_sip_python_module(PyKDE4.kio sip/kio/kiomod.sip ${KDE4_KIO_LIBS} ${KDE4_KFILE_LIBS} ${KDE4_SOLID_LIBS})
++ 
++ file(GLOB kutils_files_sip sip/kutils/*.sip)
++ set(SIP_EXTRA_FILES_DEPEND ${kutils_files_sip})
++@@ -190,7 +190,7 @@ add_sip_python_module(PyKDE4.knewstuff sip/knewstuff/knewstuffmod.sip ${KDE4_KNE
++ 
++ file(GLOB dnssd_files_sip sip/dnssd/*.sip)
++ set(SIP_EXTRA_FILES_DEPEND ${dnssd_files_sip})
++-add_sip_python_module(PyKDE4.dnssd sip/dnssd/dnssdmod.sip ${KDE4_KDNSSD_LIBS} ${QT_QTCORE_LIBRARY})
+++add_sip_python_module(PyKDE4.dnssd sip/dnssd/dnssdmod.sip ${KDE4_KDNSSD_LIBS} ${QT_QTCORE_LIBRARY} ${QT_QTNETWORK_LIBRARY})
++ 
++ file(GLOB phonon_files_sip sip/phonon/*.sip)
++ set(SIP_EXTRA_FILES_DEPEND ${phonon_files_sip})
++-- 
++2.9.3
++
+diff --git a/0003-Fix-build-with-sip-4.19.patch b/0003-Fix-build-with-sip-4.19.patch
+new file mode 100644
+index 0000000..61ef78d
+--- /dev/null
++++ b/0003-Fix-build-with-sip-4.19.patch
+@@ -0,0 +1,599 @@
++From 2d1eadf5d0148c88cb4393993f0269e196cbe7b1 Mon Sep 17 00:00:00 2001
++From: Johannes Huber <johu@gentoo.org>
++Date: Mon, 9 Jan 2017 11:52:12 +0100
++Subject: [PATCH 3/3] Fix build with sip 4.19
++
++REVIEW: 129799
++---
++ sip/dnssd/remoteservice.sip       | 10 +++++-----
++ sip/kdecore/kmimetype.sip         | 10 +++++-----
++ sip/kdecore/ksharedconfig.sip     |  4 ++--
++ sip/kdecore/ksycocaentry.sip      | 10 +++++-----
++ sip/kdecore/typedefs.sip          | 30 +++++++++++++++---------------
++ sip/kdeui/kcompletion.sip         | 10 +++++-----
++ sip/kdeui/kxmlguibuilder.sip      |  4 ++--
++ sip/kio/kservicegroup.sip         | 10 +++++-----
++ sip/ktexteditor/markinterface.sip | 10 +++++-----
++ sip/phonon/objectdescription.sip  | 10 +++++-----
++ sip/soprano/pluginmanager.sip     | 30 +++++++++++++++---------------
++ 11 files changed, 69 insertions(+), 69 deletions(-)
++
++diff --git a/sip/dnssd/remoteservice.sip b/sip/dnssd/remoteservice.sip
++index 5c5397a..44db887 100644
++--- a/sip/dnssd/remoteservice.sip
+++++ b/sip/dnssd/remoteservice.sip
++@@ -66,7 +66,7 @@ protected:
++         DNSSD::RemoteService::Ptr *t = new DNSSD::RemoteService::Ptr (sipCpp->at(i));
++         PyObject *tobj;
++ 
++-        if ((tobj = sipConvertFromNewInstance(t->data(), sipClass_DNSSD_RemoteService, sipTransferObj)) == NULL)
+++        if ((tobj = sipConvertFromNewType(t->data(), sipType_DNSSD_RemoteService, sipTransferObj)) == NULL)
++         {
++             Py_DECREF(l);
++             delete t;
++@@ -88,7 +88,7 @@ protected:
++             return 0;
++ 
++         for (int i = 0; i < PyList_GET_SIZE(sipPy); ++i)
++-            if (!sipCanConvertToInstance(PyList_GET_ITEM(sipPy, i), sipClass_DNSSD_RemoteService, SIP_NOT_NONE))
+++            if (!sipCanConvertToType(PyList_GET_ITEM(sipPy, i), sipType_DNSSD_RemoteService, SIP_NOT_NONE))
++                 return 0;
++ 
++         return 1;
++@@ -99,11 +99,11 @@ protected:
++     for (int i = 0; i < PyList_GET_SIZE(sipPy); ++i)
++     {
++         int state;
++-        DNSSD::RemoteService *t = reinterpret_cast<DNSSD::RemoteService *>(sipConvertToInstance(PyList_GET_ITEM(sipPy, i), sipClass_DNSSD_RemoteService, sipTransferObj, SIP_NOT_NONE, &state, sipIsErr));
+++        DNSSD::RemoteService *t = reinterpret_cast<DNSSD::RemoteService *>(sipConvertToType(PyList_GET_ITEM(sipPy, i), sipType_DNSSD_RemoteService, sipTransferObj, SIP_NOT_NONE, &state, sipIsErr));
++  
++         if (*sipIsErr)
++         {
++-            sipReleaseInstance(t, sipClass_DNSSD_RemoteService, state);
+++            sipReleaseType(t, sipType_DNSSD_RemoteService, state);
++ 
++             delete ql;
++             return 0;
++@@ -113,7 +113,7 @@ protected:
++ 
++         ql->append(*tptr);
++ 
++-        sipReleaseInstance(t, sipClass_DNSSD_RemoteService, state);
+++        sipReleaseType(t, sipType_DNSSD_RemoteService, state);
++     }
++  
++     *sipCppPtr = ql;
++diff --git a/sip/kdecore/kmimetype.sip b/sip/kdecore/kmimetype.sip
++index b2d21f7..2945210 100644
++--- a/sip/kdecore/kmimetype.sip
+++++ b/sip/kdecore/kmimetype.sip
++@@ -100,7 +100,7 @@ public:
++         KMimeType::Ptr *t = new KMimeType::Ptr (sipCpp->at(i));
++         PyObject *tobj;
++ 
++-        if ((tobj = sipConvertFromNewInstance(t->data(), sipClass_KMimeType, sipTransferObj)) == NULL)
+++        if ((tobj = sipConvertFromNewType(t->data(), sipType_KMimeType, sipTransferObj)) == NULL)
++         {
++             Py_DECREF(l);
++             delete t;
++@@ -122,7 +122,7 @@ public:
++             return 0;
++ 
++         for (int i = 0; i < PyList_GET_SIZE(sipPy); ++i)
++-            if (!sipCanConvertToInstance(PyList_GET_ITEM(sipPy, i), sipClass_KMimeType, SIP_NOT_NONE))
+++            if (!sipCanConvertToType(PyList_GET_ITEM(sipPy, i), sipType_KMimeType, SIP_NOT_NONE))
++                 return 0;
++ 
++         return 1;
++@@ -133,11 +133,11 @@ public:
++     for (int i = 0; i < PyList_GET_SIZE(sipPy); ++i)
++     {
++         int state;
++-        KMimeType *t = reinterpret_cast<KMimeType *>(sipConvertToInstance(PyList_GET_ITEM(sipPy, i), sipClass_KMimeType, sipTransferObj, SIP_NOT_NONE, &state, sipIsErr));
+++        KMimeType *t = reinterpret_cast<KMimeType *>(sipConvertToType(PyList_GET_ITEM(sipPy, i), sipType_KMimeType, sipTransferObj, SIP_NOT_NONE, &state, sipIsErr));
++  
++         if (*sipIsErr)
++         {
++-            sipReleaseInstance(t, sipClass_KMimeType, state);
+++            sipReleaseType(t, sipType_KMimeType, state);
++ 
++             delete ql;
++             return 0;
++@@ -147,7 +147,7 @@ public:
++ 
++         ql->append(*tptr);
++ 
++-        sipReleaseInstance(t, sipClass_KMimeType, state);
+++        sipReleaseType(t, sipType_KMimeType, state);
++     }
++  
++     *sipCppPtr = ql;
++diff --git a/sip/kdecore/ksharedconfig.sip b/sip/kdecore/ksharedconfig.sip
++index 54b1599..9442d80 100644
++--- a/sip/kdecore/ksharedconfig.sip
+++++ b/sip/kdecore/ksharedconfig.sip
++@@ -65,7 +65,7 @@ typedef KSharedConfig::Ptr KSharedConfigPtr;
++     KSharedConfigPtr kcpp = *sipCpp;
++     KSharedConfig *ksc    = kcpp.data ();
++     ksc->ref.ref();
++-    PyObject *pyKsc       = sipConvertFromInstance(ksc, sipClass_KSharedConfig, sipTransferObj);
+++    PyObject *pyKsc       = sipConvertFromType(ksc, sipType_KSharedConfig, sipTransferObj);
++     return pyKsc;
++ %End
++ 
++@@ -74,7 +74,7 @@ typedef KSharedConfig::Ptr KSharedConfigPtr;
++         return 1;
++ 
++     int state;
++-    KSharedConfig* ksc = (KSharedConfig *)sipConvertToInstance(sipPy, sipClass_KSharedConfig, sipTransferObj, SIP_NOT_NONE, &state, sipIsErr);
+++    KSharedConfig* ksc = (KSharedConfig *)sipConvertToType(sipPy, sipType_KSharedConfig, sipTransferObj, SIP_NOT_NONE, &state, sipIsErr);
++     *sipCppPtr = new KSharedConfigPtr (ksc);
++     ksc->ref.deref();
++     return sipGetState(sipTransferObj);
++diff --git a/sip/kdecore/ksycocaentry.sip b/sip/kdecore/ksycocaentry.sip
++index 4632e4a..ceb85fa 100644
++--- a/sip/kdecore/ksycocaentry.sip
+++++ b/sip/kdecore/ksycocaentry.sip
++@@ -83,7 +83,7 @@ private:
++         KSycocaEntry::Ptr *t = new KSycocaEntry::Ptr (sipCpp->at(i));
++         PyObject *tobj;
++ 
++-        if ((tobj = sipConvertFromNewInstance(t->data(), sipClass_KSycocaEntry, sipTransferObj)) == NULL)
+++        if ((tobj = sipConvertFromNewType(t->data(), sipType_KSycocaEntry, sipTransferObj)) == NULL)
++         {
++             Py_DECREF(l);
++             delete t;
++@@ -105,7 +105,7 @@ private:
++             return 0;
++ 
++         for (int i = 0; i < PyList_GET_SIZE(sipPy); ++i)
++-            if (!sipCanConvertToInstance(PyList_GET_ITEM(sipPy, i), sipClass_KSycocaEntry, SIP_NOT_NONE))
+++            if (!sipCanConvertToType(PyList_GET_ITEM(sipPy, i), sipType_KSycocaEntry, SIP_NOT_NONE))
++                 return 0;
++ 
++         return 1;
++@@ -116,11 +116,11 @@ private:
++     for (int i = 0; i < PyList_GET_SIZE(sipPy); ++i)
++     {
++         int state;
++-        KSycocaEntry *t = reinterpret_cast<KSycocaEntry *>(sipConvertToInstance(PyList_GET_ITEM(sipPy, i), sipClass_KSycocaEntry, sipTransferObj, SIP_NOT_NONE, &state, sipIsErr));
+++        KSycocaEntry *t = reinterpret_cast<KSycocaEntry *>(sipConvertToType(PyList_GET_ITEM(sipPy, i), sipType_KSycocaEntry, sipTransferObj, SIP_NOT_NONE, &state, sipIsErr));
++  
++         if (*sipIsErr)
++         {
++-            sipReleaseInstance(t, sipClass_KSycocaEntry, state);
+++            sipReleaseType(t, sipType_KSycocaEntry, state);
++ 
++             delete ql;
++             return 0;
++@@ -130,7 +130,7 @@ private:
++ 
++         ql->append(*tptr);
++ 
++-        sipReleaseInstance(t, sipClass_KSycocaEntry, state);
+++        sipReleaseType(t, sipType_KSycocaEntry, state);
++     }
++  
++     *sipCppPtr = ql;
++diff --git a/sip/kdecore/typedefs.sip b/sip/kdecore/typedefs.sip
++index af53f85..23956b7 100644
++--- a/sip/kdecore/typedefs.sip
+++++ b/sip/kdecore/typedefs.sip
++@@ -397,8 +397,8 @@ template <TYPE1,TYPE2>
++         TYPE1 *t1 = new TYPE1(i.key());
++         TYPE2 *t2 = new TYPE2(i.value());
++ 
++-        PyObject *t1obj = sipConvertFromNewInstance(t1, sipClass_TYPE1, sipTransferObj);
++-        PyObject *t2obj = sipConvertFromNewInstance(t2, sipClass_TYPE2, sipTransferObj);
+++        PyObject *t1obj = sipConvertFromNewType(t1, sipType_TYPE1, sipTransferObj);
+++        PyObject *t2obj = sipConvertFromNewType(t2, sipType_TYPE2, sipTransferObj);
++ 
++         if (t1obj == NULL || t2obj == NULL || PyDict_SetItem(d, t1obj, t2obj) < 0)
++         {
++@@ -438,10 +438,10 @@ template <TYPE1,TYPE2>
++ 
++         while (PyDict_Next(sipPy, &i, &t1obj, &t2obj))
++         {
++-            if (!sipCanConvertToInstance(t1obj, sipClass_TYPE1, SIP_NOT_NONE))
+++            if (!sipCanConvertToType(t1obj, sipType_TYPE1, SIP_NOT_NONE))
++                 return 0;
++ 
++-            if (!sipCanConvertToInstance(t2obj, sipClass_TYPE2, SIP_NOT_NONE))
+++            if (!sipCanConvertToType(t2obj, sipType_TYPE2, SIP_NOT_NONE))
++                 return 0;
++         } 
++ 
++@@ -454,13 +454,13 @@ template <TYPE1,TYPE2>
++     {
++         int state1, state2;
++ 
++-        TYPE1 *t1 = reinterpret_cast<TYPE1 *>(sipConvertToInstance(t1obj, sipClass_TYPE1, sipTransferObj, SIP_NOT_NONE, &state1, sipIsErr));
++-        TYPE2 *t2 = reinterpret_cast<TYPE2 *>(sipConvertToInstance(t2obj, sipClass_TYPE2, sipTransferObj, SIP_NOT_NONE, &state2, sipIsErr));
+++        TYPE1 *t1 = reinterpret_cast<TYPE1 *>(sipConvertToType(t1obj, sipType_TYPE1, sipTransferObj, SIP_NOT_NONE, &state1, sipIsErr));
+++        TYPE2 *t2 = reinterpret_cast<TYPE2 *>(sipConvertToType(t2obj, sipType_TYPE2, sipTransferObj, SIP_NOT_NONE, &state2, sipIsErr));
++  
++         if (*sipIsErr)
++         {
++-            sipReleaseInstance(t1, sipClass_TYPE1, state1);
++-            sipReleaseInstance(t2, sipClass_TYPE2, state2);
+++            sipReleaseType(t1, sipType_TYPE1, state1);
+++            sipReleaseType(t2, sipType_TYPE2, state2);
++ 
++             delete qm;
++             return 0;
++@@ -468,8 +468,8 @@ template <TYPE1,TYPE2>
++ 
++         qm->insert(*t1, *t2);
++ 
++-        sipReleaseInstance(t1, sipClass_TYPE1, state1);
++-        sipReleaseInstance(t2, sipClass_TYPE2, state2);
+++        sipReleaseType(t1, sipType_TYPE1, state1);
+++        sipReleaseType(t2, sipType_TYPE2, state2);
++     }
++  
++     *sipCppPtr = qm;
++@@ -669,7 +669,7 @@ template <TYPE*>
++         TYPE *t = (TYPE *)(sipCpp->at(i));
++         PyObject *tobj;
++ 
++-        if ((tobj = sipConvertFromNewInstance(t, sipClass_TYPE, sipTransferObj)) == NULL)
+++        if ((tobj = sipConvertFromNewType(t, sipType_TYPE, sipTransferObj)) == NULL)
++         {
++             Py_DECREF(l);
++             delete t;
++@@ -691,7 +691,7 @@ template <TYPE*>
++             return 0;
++ 
++         for (int i = 0; i < PyList_GET_SIZE(sipPy); ++i)
++-            if (!sipCanConvertToInstance(PyList_GET_ITEM(sipPy, i), sipClass_TYPE, SIP_NOT_NONE))
+++            if (!sipCanConvertToType(PyList_GET_ITEM(sipPy, i), sipType_TYPE, SIP_NOT_NONE))
++                 return 0;
++ 
++         return 1;
++@@ -702,11 +702,11 @@ template <TYPE*>
++     for (int i = 0; i < PyList_GET_SIZE(sipPy); ++i)
++     {
++         int state;
++-        TYPE *t = reinterpret_cast<TYPE *>(sipConvertToInstance(PyList_GET_ITEM(sipPy, i), sipClass_TYPE, sipTransferObj, SIP_NOT_NONE, &state, sipIsErr));
+++        TYPE *t = reinterpret_cast<TYPE *>(sipConvertToType(PyList_GET_ITEM(sipPy, i), sipType_TYPE, sipTransferObj, SIP_NOT_NONE, &state, sipIsErr));
++  
++         if (*sipIsErr)
++         {
++-            sipReleaseInstance(t, sipClass_TYPE, state);
+++            sipReleaseType(t, sipType_TYPE, state);
++ 
++             delete qv;
++             return 0;
++@@ -714,7 +714,7 @@ template <TYPE*>
++ 
++         qv->append(t);
++ 
++-        sipReleaseInstance(t, sipClass_TYPE, state);
+++        sipReleaseType(t, sipType_TYPE, state);
++     }
++  
++     *sipCppPtr = qv;
++diff --git a/sip/kdeui/kcompletion.sip b/sip/kdeui/kcompletion.sip
++index f1d327f..938506a 100644
++--- a/sip/kdeui/kcompletion.sip
+++++ b/sip/kdeui/kcompletion.sip
++@@ -176,7 +176,7 @@ public:
++ #else
++         PyObject *kobj = PyInt_FromLong((int)i.key());
++ #endif
++-        PyObject *tobj = sipConvertFromNewInstance(t, sipClass_KShortcut, sipTransferObj);
+++        PyObject *tobj = sipConvertFromNewType(t, sipType_KShortcut, sipTransferObj);
++ 
++         if (kobj == NULL || tobj == NULL || PyDict_SetItem(d, kobj, tobj) < 0)
++         {
++@@ -213,7 +213,7 @@ public:
++             return 0;
++ 
++         while (PyDict_Next(sipPy, &i, &kobj, &tobj))
++-            if (!sipCanConvertToInstance(tobj, sipClass_KShortcut, SIP_NOT_NONE))
+++            if (!sipCanConvertToType(tobj, sipType_KShortcut, SIP_NOT_NONE))
++                 return 0;
++ 
++         return 1;
++@@ -229,11 +229,11 @@ public:
++ #else
++         int k = PyInt_AsLong(kobj);
++ #endif
++-        KShortcut *t = reinterpret_cast<KShortcut *>(sipConvertToInstance(tobj, sipClass_KShortcut, sipTransferObj, SIP_NOT_NONE, &state, sipIsErr));
+++        KShortcut *t = reinterpret_cast<KShortcut *>(sipConvertToType(tobj, sipType_KShortcut, sipTransferObj, SIP_NOT_NONE, &state, sipIsErr));
++  
++         if (*sipIsErr)
++         {
++-            sipReleaseInstance(t, sipClass_KShortcut, state);
+++            sipReleaseType(t, sipType_KShortcut, state);
++ 
++             delete qm;
++             return 0;
++@@ -241,7 +241,7 @@ public:
++ 
++         qm->insert((KCompletionBase::KeyBindingType)k, *t);
++ 
++-        sipReleaseInstance(t, sipClass_KShortcut, state);
+++        sipReleaseType(t, sipType_KShortcut, state);
++     }
++  
++     *sipCppPtr = qm;
++diff --git a/sip/kdeui/kxmlguibuilder.sip b/sip/kdeui/kxmlguibuilder.sip
++index 41ae2aa..e4cf187 100644
++--- a/sip/kdeui/kxmlguibuilder.sip
+++++ b/sip/kdeui/kxmlguibuilder.sip
++@@ -49,10 +49,10 @@ QAction *containerAction;
++     PyObject *pyWidget;
++     PyObject *pyContainerAction;
++ 
++-    if ((pyWidget = sipConvertFromNewInstance(res, sipClass_QWidget, NULL)) == NULL)
+++    if ((pyWidget = sipConvertFromNewType(res, sipType_QWidget, NULL)) == NULL)
++         return NULL;
++ 
++-    if ((pyContainerAction = sipConvertFromNewInstance(containerAction, sipClass_QAction, NULL)) == NULL)
+++    if ((pyContainerAction = sipConvertFromNewType(containerAction, sipType_QAction, NULL)) == NULL)
++         return NULL;
++ 
++     sipRes = Py_BuildValue ("NN", pyWidget, pyContainerAction);
++diff --git a/sip/kio/kservicegroup.sip b/sip/kio/kservicegroup.sip
++index a1ef981..1ddce37 100644
++--- a/sip/kio/kservicegroup.sip
+++++ b/sip/kio/kservicegroup.sip
++@@ -151,7 +151,7 @@ public:
++         KServiceGroup::SPtr *t = new KServiceGroup::SPtr (sipCpp->at(i));
++         PyObject *tobj;
++ 
++-        if ((tobj = sipConvertFromNewInstance(t->data(), sipClass_KServiceGroup, sipTransferObj)) == NULL)
+++        if ((tobj = sipConvertFromNewType(t->data(), sipType_KServiceGroup, sipTransferObj)) == NULL)
++         {
++             Py_DECREF(l);
++             delete t;
++@@ -173,7 +173,7 @@ public:
++             return 0;
++ 
++         for (int i = 0; i < PyList_GET_SIZE(sipPy); ++i)
++-            if (!sipCanConvertToInstance(PyList_GET_ITEM(sipPy, i), sipClass_KServiceGroup, SIP_NOT_NONE))
+++            if (!sipCanConvertToType(PyList_GET_ITEM(sipPy, i), sipType_KServiceGroup, SIP_NOT_NONE))
++                 return 0;
++ 
++         return 1;
++@@ -184,11 +184,11 @@ public:
++     for (int i = 0; i < PyList_GET_SIZE(sipPy); ++i)
++     {
++         int state;
++-        KServiceGroup *t = reinterpret_cast<KServiceGroup *>(sipConvertToInstance(PyList_GET_ITEM(sipPy, i), sipClass_KServiceGroup, sipTransferObj, SIP_NOT_NONE, &state, sipIsErr));
+++        KServiceGroup *t = reinterpret_cast<KServiceGroup *>(sipConvertToType(PyList_GET_ITEM(sipPy, i), sipType_KServiceGroup, sipTransferObj, SIP_NOT_NONE, &state, sipIsErr));
++  
++         if (*sipIsErr)
++         {
++-            sipReleaseInstance(t, sipClass_KServiceGroup, state);
+++            sipReleaseType(t, sipType_KServiceGroup, state);
++ 
++             delete ql;
++             return 0;
++@@ -198,7 +198,7 @@ public:
++ 
++         ql->append(*tptr);
++ 
++-        sipReleaseInstance(t, sipClass_KServiceGroup, state);
+++        sipReleaseType(t, sipType_KServiceGroup, state);
++     }
++  
++     *sipCppPtr = ql;
++diff --git a/sip/ktexteditor/markinterface.sip b/sip/ktexteditor/markinterface.sip
++index d9b0ec9..888c506 100644
++--- a/sip/ktexteditor/markinterface.sip
+++++ b/sip/ktexteditor/markinterface.sip
++@@ -158,7 +158,7 @@ signals:
++ #else
++         PyObject *t1obj = PyInt_FromLong ((long)t1);
++ #endif
++-        PyObject *t2obj = sipConvertFromNewInstance(t2, sipClass_KTextEditor_Mark, sipTransferObj);
+++        PyObject *t2obj = sipConvertFromNewType(t2, sipType_KTextEditor_Mark, sipTransferObj);
++ 
++         if (t2obj == NULL || PyDict_SetItem(d, t1obj, t2obj) < 0)
++         {
++@@ -203,7 +203,7 @@ signals:
++ #endif
++                 return 0;
++ 
++-            if (!sipCanConvertToInstance(t2obj, sipClass_KTextEditor_Mark, SIP_NOT_NONE))
+++            if (!sipCanConvertToType(t2obj, sipType_KTextEditor_Mark, SIP_NOT_NONE))
++                 return 0;
++         } 
++ 
++@@ -221,11 +221,11 @@ signals:
++ #else
++         int t1 = PyInt_AS_LONG (t1obj);
++ #endif
++-        KTextEditor::Mark *t2 = reinterpret_cast<KTextEditor::Mark *>(sipConvertToInstance(t2obj, sipClass_KTextEditor_Mark, sipTransferObj, SIP_NOT_NONE, &state2, sipIsErr));
+++        KTextEditor::Mark *t2 = reinterpret_cast<KTextEditor::Mark *>(sipConvertToType(t2obj, sipType_KTextEditor_Mark, sipTransferObj, SIP_NOT_NONE, &state2, sipIsErr));
++  
++         if (*sipIsErr)
++         {
++-            sipReleaseInstance(t2, sipClass_KTextEditor_Mark, state2);
+++            sipReleaseType(t2, sipType_KTextEditor_Mark, state2);
++ 
++             delete qm;
++             return 0;
++@@ -233,7 +233,7 @@ signals:
++ 
++         qm->insert(t1, t2);
++ 
++-        sipReleaseInstance(t2, sipClass_KTextEditor_Mark, state2);
+++        sipReleaseType(t2, sipType_KTextEditor_Mark, state2);
++     }
++  
++     *sipCppPtr = qm;
++diff --git a/sip/phonon/objectdescription.sip b/sip/phonon/objectdescription.sip
++index 2b86d5e..015b2ef 100644
++--- a/sip/phonon/objectdescription.sip
+++++ b/sip/phonon/objectdescription.sip
++@@ -116,7 +116,7 @@ void                    registerMetaTypes ();
++         DNSSD::RemoteService::Ptr *t = new Phonon::ObjectDescription (sipCpp->at(i));
++         PyObject *tobj;
++ 
++-        if ((tobj = sipConvertFromNewInstance(t->data(), sipClass_DNSSD_RemoteService, sipTransferObj)) == NULL)
+++        if ((tobj = sipConvertFromNewType(t->data(), sipType_DNSSD_RemoteService, sipTransferObj)) == NULL)
++         {
++             Py_DECREF(l);
++             delete t;
++@@ -138,7 +138,7 @@ void                    registerMetaTypes ();
++             return 0;
++ 
++         for (int i = 0; i < PyList_GET_SIZE(sipPy); ++i)
++-            if (!sipCanConvertToInstance(PyList_GET_ITEM(sipPy, i), sipClass_DNSSD_RemoteService, SIP_NOT_NONE))
+++            if (!sipCanConvertToType(PyList_GET_ITEM(sipPy, i), sipType_DNSSD_RemoteService, SIP_NOT_NONE))
++                 return 0;
++ 
++         return 1;
++@@ -149,11 +149,11 @@ void                    registerMetaTypes ();
++     for (int i = 0; i < PyList_GET_SIZE(sipPy); ++i)
++     {
++         int state;
++-        DNSSD::RemoteService *t = reinterpret_cast<DNSSD::RemoteService *>(sipConvertToInstance(PyList_GET_ITEM(sipPy, i), sipClass_DNSSD_RemoteService, sipTransferObj, SIP_NOT_NONE, &state, sipIsErr));
+++        DNSSD::RemoteService *t = reinterpret_cast<DNSSD::RemoteService *>(sipConvertToType(PyList_GET_ITEM(sipPy, i), sipType_DNSSD_RemoteService, sipTransferObj, SIP_NOT_NONE, &state, sipIsErr));
++  
++         if (*sipIsErr)
++         {
++-            sipReleaseInstance(t, sipClass_DNSSD_RemoteService, state);
+++            sipReleaseType(t, sipType_DNSSD_RemoteService, state);
++ 
++             delete ql;
++             return 0;
++@@ -163,7 +163,7 @@ void                    registerMetaTypes ();
++ 
++         ql->append(*tptr);
++ 
++-        sipReleaseInstance(t, sipClass_DNSSD_RemoteService, state);
+++        sipReleaseType(t, sipType_DNSSD_RemoteService, state);
++     }
++  
++     *sipCppPtr = ql;
++diff --git a/sip/soprano/pluginmanager.sip b/sip/soprano/pluginmanager.sip
++index c2be1c3..fe990f8 100644
++--- a/sip/soprano/pluginmanager.sip
+++++ b/sip/soprano/pluginmanager.sip
++@@ -73,7 +73,7 @@ public:
++         Soprano::Backend* t = const_cast<Soprano::Backend*>(sipCpp->at(i));
++         PyObject *tobj;
++ 
++-        if ((tobj = sipConvertFromInstance(t, sipClass_Soprano_Backend, sipTransferObj)) == NULL)
+++        if ((tobj = sipConvertFromType(t, sipType_Soprano_Backend, sipTransferObj)) == NULL)
++         {
++             Py_DECREF(l);
++             return NULL;
++@@ -93,7 +93,7 @@ public:
++             return 0;
++ 
++         for (int i = 0; i < PyList_GET_SIZE(sipPy); ++i)
++-            if (!sipCanConvertToInstance(PyList_GET_ITEM(sipPy, i), sipClass_Soprano_Backend, SIP_NOT_NONE))
+++            if (!sipCanConvertToType(PyList_GET_ITEM(sipPy, i), sipType_Soprano_Backend, SIP_NOT_NONE))
++                 return 0;
++ 
++         return 1;
++@@ -104,18 +104,18 @@ public:
++     for (int i = 0; i < PyList_GET_SIZE(sipPy); ++i)
++     {
++         int state;
++-        const Soprano::Backend*t = reinterpret_cast<const Soprano::Backend*>(sipConvertToInstance(PyList_GET_ITEM(sipPy, i), sipClass_Soprano_Backend, sipTransferObj, SIP_NOT_NONE, &state, sipIsErr));
+++        const Soprano::Backend*t = reinterpret_cast<const Soprano::Backend*>(sipConvertToType(PyList_GET_ITEM(sipPy, i), sipType_Soprano_Backend, sipTransferObj, SIP_NOT_NONE, &state, sipIsErr));
++  
++         if (*sipIsErr)
++         {
++-            sipReleaseInstance(const_cast<Soprano::Backend*>(t), sipClass_Soprano_Backend, state);
+++            sipReleaseType(const_cast<Soprano::Backend*>(t), sipType_Soprano_Backend, state);
++ 
++             delete ql;
++             return 0;
++         }
++         ql->append(t);
++ 
++-        sipReleaseInstance(const_cast<Soprano::Backend*>(t), sipClass_Soprano_Backend, state);
+++        sipReleaseType(const_cast<Soprano::Backend*>(t), sipType_Soprano_Backend, state);
++     }
++  
++     *sipCppPtr = ql;
++@@ -144,7 +144,7 @@ public:
++         Soprano::Parser* t = const_cast<Soprano::Parser*>(sipCpp->at(i));
++         PyObject *tobj;
++ 
++-        if ((tobj = sipConvertFromInstance(t, sipClass_Soprano_Parser, sipTransferObj)) == NULL)
+++        if ((tobj = sipConvertFromType(t, sipType_Soprano_Parser, sipTransferObj)) == NULL)
++         {
++             Py_DECREF(l);
++             return NULL;
++@@ -164,7 +164,7 @@ public:
++             return 0;
++ 
++         for (int i = 0; i < PyList_GET_SIZE(sipPy); ++i)
++-            if (!sipCanConvertToInstance(PyList_GET_ITEM(sipPy, i), sipClass_Soprano_Parser, SIP_NOT_NONE))
+++            if (!sipCanConvertToType(PyList_GET_ITEM(sipPy, i), sipType_Soprano_Parser, SIP_NOT_NONE))
++                 return 0;
++ 
++         return 1;
++@@ -175,18 +175,18 @@ public:
++     for (int i = 0; i < PyList_GET_SIZE(sipPy); ++i)
++     {
++         int state;
++-        const Soprano::Parser*t = reinterpret_cast<const Soprano::Parser*>(sipConvertToInstance(PyList_GET_ITEM(sipPy, i), sipClass_Soprano_Parser, sipTransferObj, SIP_NOT_NONE, &state, sipIsErr));
+++        const Soprano::Parser*t = reinterpret_cast<const Soprano::Parser*>(sipConvertToType(PyList_GET_ITEM(sipPy, i), sipType_Soprano_Parser, sipTransferObj, SIP_NOT_NONE, &state, sipIsErr));
++  
++         if (*sipIsErr)
++         {
++-            sipReleaseInstance(const_cast<Soprano::Parser*>(t), sipClass_Soprano_Parser, state);
+++            sipReleaseType(const_cast<Soprano::Parser*>(t), sipType_Soprano_Parser, state);
++ 
++             delete ql;
++             return 0;
++         }
++         ql->append(t);
++ 
++-        sipReleaseInstance(const_cast<Soprano::Parser*>(t), sipClass_Soprano_Parser, state);
+++        sipReleaseType(const_cast<Soprano::Parser*>(t), sipType_Soprano_Parser, state);
++     }
++  
++     *sipCppPtr = ql;
++@@ -215,7 +215,7 @@ public:
++         Soprano::Serializer* t = const_cast<Soprano::Serializer*>(sipCpp->at(i));
++         PyObject *tobj;
++ 
++-        if ((tobj = sipConvertFromInstance(t, sipClass_Soprano_Serializer, sipTransferObj)) == NULL)
+++        if ((tobj = sipConvertFromType(t, sipType_Soprano_Serializer, sipTransferObj)) == NULL)
++         {
++             Py_DECREF(l);
++             return NULL;
++@@ -235,7 +235,7 @@ public:
++             return 0;
++ 
++         for (int i = 0; i < PyList_GET_SIZE(sipPy); ++i)
++-            if (!sipCanConvertToInstance(PyList_GET_ITEM(sipPy, i), sipClass_Soprano_Serializer, SIP_NOT_NONE))
+++            if (!sipCanConvertToType(PyList_GET_ITEM(sipPy, i), sipType_Soprano_Serializer, SIP_NOT_NONE))
++                 return 0;
++ 
++         return 1;
++@@ -246,18 +246,18 @@ public:
++     for (int i = 0; i < PyList_GET_SIZE(sipPy); ++i)
++     {
++         int state;
++-        const Soprano::Serializer*t = reinterpret_cast<const Soprano::Serializer*>(sipConvertToInstance(PyList_GET_ITEM(sipPy, i), sipClass_Soprano_Serializer, sipTransferObj, SIP_NOT_NONE, &state, sipIsErr));
+++        const Soprano::Serializer*t = reinterpret_cast<const Soprano::Serializer*>(sipConvertToType(PyList_GET_ITEM(sipPy, i), sipType_Soprano_Serializer, sipTransferObj, SIP_NOT_NONE, &state, sipIsErr));
++  
++         if (*sipIsErr)
++         {
++-            sipReleaseInstance(const_cast<Soprano::Serializer*>(t), sipClass_Soprano_Serializer, state);
+++            sipReleaseType(const_cast<Soprano::Serializer*>(t), sipType_Soprano_Serializer, state);
++ 
++             delete ql;
++             return 0;
++         }
++         ql->append(t);
++ 
++-        sipReleaseInstance(const_cast<Soprano::Serializer*>(t), sipClass_Soprano_Serializer, state);
+++        sipReleaseType(const_cast<Soprano::Serializer*>(t), sipType_Soprano_Serializer, state);
++     }
++  
++     *sipCppPtr = ql;
++-- 
++2.9.3
++
+diff --git a/pykde4-4.12.3-python_library_realpath.patch b/pykde4-4.12.3-python_library_realpath.patch
+deleted file mode 100644
+index 5e7eb14..0000000
+--- a/pykde4-4.12.3-python_library_realpath.patch
++++ /dev/null
+@@ -1,13 +0,0 @@
+-diff -up pykde4-4.12.3/kpythonpluginfactory/CMakeLists.txt.python_library_realpath pykde4-4.12.3/kpythonpluginfactory/CMakeLists.txt
+---- pykde4-4.12.3/kpythonpluginfactory/CMakeLists.txt.python_library_realpath	2014-01-18 13:18:35.000000000 -0600
+-+++ pykde4-4.12.3/kpythonpluginfactory/CMakeLists.txt	2014-03-07 22:38:06.228544932 -0600
+-@@ -3,7 +3,8 @@
+- set(kpythonpluginfactory_SRCS
+-     kpythonpluginfactory.cpp)
+- 
+--GET_FILENAME_COMPONENT(LIB_PYTHON ${PYTHON_LIBRARIES} NAME)
+-+GET_FILENAME_COMPONENT(PYTHON_LIBRARY_REALPATH "${PYTHON_LIBRARY}" REALPATH)
+-+GET_FILENAME_COMPONENT(LIB_PYTHON ${PYTHON_LIBRARY_REALPATH} NAME)
+- ADD_DEFINITIONS(-DLIB_PYTHON="${LIB_PYTHON}")
+- ADD_DEFINITIONS(-DKDE_DEFAULT_DEBUG_AREA=15000)
+- 
+diff --git a/pykde4-4.14.3-missing_symbols.patch b/pykde4-4.14.3-missing_symbols.patch
+deleted file mode 100644
+index 0581ba4..0000000
+--- a/pykde4-4.14.3-missing_symbols.patch
++++ /dev/null
+@@ -1,21 +0,0 @@
+-diff -up pykde4-4.14.3/CMakeLists.txt.dnssd_qtnetwork pykde4-4.14.3/CMakeLists.txt
+---- pykde4-4.14.3/CMakeLists.txt.dnssd_qtnetwork	2015-11-13 10:52:34.926472756 -0600
+-+++ pykde4-4.14.3/CMakeLists.txt	2015-11-13 11:14:28.801430613 -0600
+-@@ -171,7 +171,7 @@ add_sip_python_module(PyKDE4.kdeui sip/k
+- 
+- file(GLOB kio_files_sip sip/kio/*.sip)
+- set(SIP_EXTRA_FILES_DEPEND ${kio_files_sip})
+--add_sip_python_module(PyKDE4.kio sip/kio/kiomod.sip ${KDE4_KIO_LIBS} ${KDE4_KFILE_LIBS})
+-+add_sip_python_module(PyKDE4.kio sip/kio/kiomod.sip ${KDE4_KIO_LIBS} ${KDE4_KFILE_LIBS} ${KDE4_SOLID_LIBS})
+- 
+- file(GLOB kutils_files_sip sip/kutils/*.sip)
+- set(SIP_EXTRA_FILES_DEPEND ${kutils_files_sip})
+-@@ -195,7 +195,7 @@ add_sip_python_module(PyKDE4.knewstuff s
+- 
+- file(GLOB dnssd_files_sip sip/dnssd/*.sip)
+- set(SIP_EXTRA_FILES_DEPEND ${dnssd_files_sip})
+--add_sip_python_module(PyKDE4.dnssd sip/dnssd/dnssdmod.sip ${KDE4_KDNSSD_LIBS} ${QT_QTCORE_LIBRARY})
+-+add_sip_python_module(PyKDE4.dnssd sip/dnssd/dnssdmod.sip ${KDE4_KDNSSD_LIBS} ${QT_QTCORE_LIBRARY} ${QT_QTNETWORK_LIBRARY})
+- 
+- file(GLOB phonon_files_sip sip/phonon/*.sip)
+- set(SIP_EXTRA_FILES_DEPEND ${phonon_files_sip})
+diff --git a/pykde4.spec b/pykde4.spec
+index 710159c..8a14bd1 100644
+--- a/pykde4.spec
++++ b/pykde4.spec
+@@ -8,6 +8,7 @@
+ %define webkit 1
+ %endif
+ %if 0%{?fedora} < 24
++%define akonadi 1
+ %define nepomuk 1
+ %endif
+ 
+@@ -36,7 +37,7 @@ Source2: pykdeuic4.sh
+ 
+ # Revert https://reviewboard.kde.org/r/101903
+ # hard-codes sip path to /usr/share/sip, instead of respecting system path
+-Patch1: pykde4-4.13.97-use_system_sip_dir.patch
++Patch100: pykde4-4.13.97-use_system_sip_dir.patch
+ 
+ ## upstreamable patches
+ # see also https://bugzilla.redhat.com/show_bug.cgi?id=1050944
+@@ -45,6 +46,9 @@ Patch50: pykde4-4.12.3-python_library_realpath.patch
+ Patch51: pykde4-4.14.3-missing_symbols.patch
+ 
+ ## upstream patches
++Patch1: 0001-use-LIB_PYTHON-realpath.patch
++Patch2: 0002-Add-some-missing-link-libraries.patch
++Patch3: 0003-Fix-build-with-sip-4.19.patch
+ 
+ # debian patches
+ Patch201: add_qt_kde_definitions.diff
+@@ -61,8 +65,10 @@ BuildRequires: kdelibs4-devel >= 4.14
+ %if 0%{?nepomuk}
+ BuildRequires: nepomuk-devel
+ %endif
++%if 0%{?akonadi}
+ BuildRequires: kdepimlibs-devel >= 4.14
+ BuildRequires: pkgconfig(akonadi)
++%endif
+ BuildRequires: pkgconfig(qimageblitz)
+ BuildRequires: pkgconfig(soprano)
+ %if 0%{?webkit}
+@@ -93,6 +99,10 @@ Obsoletes: PyKDE4 < 4.7.97-1
+ Provides:  PyKDE4 = %{version}-%{release}
+ Provides:  PyKDE4%{?_isa} = %{version}-%{release}
+ 
++%if ! 0%{?akonadi}
++Obsoletes: pykde4-akonadi < 4.14.3-15
++%endif
++
+ %description
+ %{summary}.
+ 
+@@ -114,7 +124,9 @@ Provides: python-kde4-devel = %{version}-%{release}
+ Obsoletes: PyKDE4-devel < 4.7.97-1
+ Provides:  PyKDE4-devel =  %{version}-%{release}
+ Provides:  PyKDE4-devel%{?_isa} = %{version}-%{release}
++%if 0%{?akonadi}
+ Requires: %{name}-akonadi%{?_isa} = %{version}-%{release}
++%endif
+ Requires: PyQt4-devel
+ Requires: %{name}%{?_isa} = %{version}-%{release}
+ %description devel
+@@ -132,6 +144,9 @@ Requires: %{name}%{?_isa} = %{version}-%{release}
+ Summary: Python 3 bindings for KDE 
+ Provides: python3-kde4 = %{version}-%{release}
+ Obsoletes: python3-PyKDE4 < 4.7.97-1
++%if ! 0%{?akonadi}
++Obsoletes: python3-pykde4-akonadi < 4.14.3-15
++%endif
+ Provides:  python3-PyKDE4 =  %{version}-%{release}
+ Provides:  python3-PyKDE4%{?_isa} = %{version}-%{release}
+ %{?_sip_api:Requires: python3-sip-api(%{_sip_api_major}) >= %{_sip_api}}
+@@ -155,7 +170,9 @@ Summary:  Files needed to build %{name}-based applications
+ Obsoletes: python3-pykde4-devel < 4.14.3-8
+ Requires: python3-PyQt4-devel
+ Requires: python3-pykde4%{?_isa} = %{version}-%{release}
++%if 0%{?akonadi}
+ Requires: python3-pykde4-akonadi%{?_isa} = %{version}-%{release}
++%endif
+ Obsoletes: python3-PyKDE4-devel < 4.7.97-1
+ Provides:  python3-PyKDE4-devel =  %{version}-%{release}
+ Provides:  python3-PyKDE4-devel%{?_isa} = %{version}-%{release}
+@@ -174,10 +191,11 @@ Requires: python3-pykde4%{?_isa} = %{version}-%{release}
+ %prep
+ %setup -q -n pykde4-%{version}
+ 
+-%patch1 -p1 -b .use_system_sip_dir
++%patch100 -p1 -b .use_system_sip_dir
+ 
+-%patch50 -p1 -b .python_library_realpath
+-%patch51 -p1 -b .missing_symbols
++%patch1 -p1 -b .0001
++%patch2 -p1 -b .0002
++%patch3 -p1 -b .0003
+ 
+ %patch201 -p1 -b .201
+ %patch202 -p1 -b .202
+@@ -251,6 +269,7 @@ rm -fv %{buildroot}%{python3_sitearch}/PyKDE4/nepomuk.so
+ 
+ 
+ %files 
++%license COPYING
+ %dir %{python2_sitearch}/PyKDE4/
+ %{python2_sitearch}/PyKDE4/__init__.py*
+ %{python2_sitearch}/PyKDE4/dnssd.so
+@@ -275,8 +294,10 @@ rm -fv %{buildroot}%{python3_sitearch}/PyKDE4/nepomuk.so
+ %dir %{_docdir}/pykde4
+ %{_kde4_libdir}/kde4/kpythonpluginfactory.so
+ 
++%if 0%{?akonadi}
+ %files akonadi
+ %{python2_sitearch}/PyKDE4/akonadi.so
++%endif
+ 
+ %files devel
+ %{_kde4_bindir}/pykdeuic4
+@@ -288,7 +309,7 @@ rm -fv %{buildroot}%{python3_sitearch}/PyKDE4/nepomuk.so
+ 
+ %if 0%{?python3}
+ %files -n python3-pykde4
+-%doc COPYING
++%license COPYING
+ %dir %{python3_sitearch}/PyKDE4/
+ %{python3_sitearch}/PyKDE4/__init__.py*
+ %{python3_sitearch}/PyKDE4/__pycache__/
+@@ -313,8 +334,10 @@ rm -fv %{buildroot}%{python3_sitearch}/PyKDE4/nepomuk.so
+ %{python3_sitearch}/PyQt4/uic/
+ %dir %{_docdir}/python3-pykde4/
+ 
++%if 0%{?akonadi}
+ %files -n python3-pykde4-akonadi
+ %{python3_sitearch}/PyKDE4/akonadi.so
++%endif
+ 
+ %files -n python3-pykde4-devel
+ %{_kde4_bindir}/pykdeuic4
+@@ -328,7 +351,8 @@ rm -fv %{buildroot}%{python3_sitearch}/PyKDE4/nepomuk.so
+ 
+ %changelog
+ * Sun Jan 01 2017 Rex Dieter <rdieter@math.unl.edu> - 4.14.3-15
+-- rebuild (sip)
++- pykde4 FTBFS against sip-4.19+ (#1416859)
++- disable akonadi support (f24+)
+ 
+ * Mon Dec 19 2016 Miro Hrončok <mhroncok@redhat.com> - 4.14.3-14
+ - Rebuild for Python 3.6
+-- 
+cgit v1.1
+
