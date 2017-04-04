@@ -8,7 +8,7 @@ DESCRIPTION="MDia - Funtoo Linux diagnostic script"
 HOMEPAGE="https://github.com/antematherian/mdia"
 SRC_URI="https://github.com/antematherian/mdia/archive/${PV}.tar.gz -> ${P}.tar.gz"
 
-LICENSE="GPL-3"
+LICENSE="MIT"
 SLOT="0"
 KEYWORDS="*"
 IUSE=""
