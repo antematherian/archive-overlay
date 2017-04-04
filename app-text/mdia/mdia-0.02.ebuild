@@ -4,9 +4,9 @@
 
 EAPI="5"
 
-DESCRIPTION="Dia - Funtoo Linux diagnostic script"
-HOMEPAGE="https://github.com/antematherian/dia"
-SRC_URI="https://github.com/antematherian/dia/archive/${PV}.tar.gz -> ${P}.tar.gz"
+DESCRIPTION="MDia - Funtoo Linux diagnostic script"
+HOMEPAGE="https://github.com/antematherian/mdia"
+SRC_URI="https://github.com/antematherian/mdia/archive/${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="GPL-3"
 SLOT="0"
