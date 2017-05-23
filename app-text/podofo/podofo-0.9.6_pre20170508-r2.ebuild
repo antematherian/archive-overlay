@@ -116,7 +116,7 @@ src_configure() {
 
 	# Bug #381359: undefined reference to `PoDoFo::PdfVariant::DelayedLoadImpl()'
 	filter-flags -fvisibility-inlines-hidden
-	append-cppflags $(-std-=c++11)
+	append-cxxflags -std=c++11
 	mycmakeargs+=(
 		"-DPODOFO_BUILD_SHARED=1"
 		"-DPODOFO_HAVE_JPEG_LIB=1"
