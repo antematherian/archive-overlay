@@ -31,7 +31,7 @@ src_prepare() {
 		die "Kernel not patched with uvesafb."
 	fi
 
-	if use kernel_linux && kernel_is ge 4 10; then
+	if use kernel_linux && kernel_is ge 4 9; then
 	epatch "${FILESDIR}/v86d-0.1.10-atomict.patch"
 	fi
 }
