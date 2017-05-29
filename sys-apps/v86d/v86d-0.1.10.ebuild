@@ -7,7 +7,7 @@ inherit eutils flag-o-matic linux-info multilib
 
 DESCRIPTION="A daemon to run x86 code in an emulated environment"
 HOMEPAGE="https://dev.gentoo.org/~spock/projects/uvesafb/"
-SRC_URI="https://dev.gentoo.org/~spock/projects/uvesafb/archive/${P/_/-}.tar.bz2 mirror://funtoo/${P}.tar.bz2"
+SRC_URI="mirror://funtoo/${P}.tar.bz2"
 RESTRICT="mirror"
 
 LICENSE="GPL-2"
