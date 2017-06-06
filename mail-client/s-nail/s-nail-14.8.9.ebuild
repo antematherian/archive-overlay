@@ -40,3 +40,14 @@ src_compile() {
 	emake test || die "emake failed"
 }
 
+src_install() {
+	emake DESTDIR="${D}" \
+		PREFIX="${EPREFIX}/usr" \
+		SYSCONFDIR="${EPREFIX}"/etc \
+		LIBEXECDIR="${EPREFIX}"/usr/lib \
+	doinstall
+	dodoc README
+	dodir /bin
+	dosym /usr/bin/mail /bin/mail
+	dosym /usr/bin/mail /usr/bin/Mail
+}
