@@ -18,6 +18,7 @@ DEPEND="dev-libs/openssl
 		virtual/krb5
 		net-dns/libidn
 		!mail-client/mailx
+		!mail-client/nail
 		!net-mail/mailutils"
 RDEPEND="${DEPEND}"
 PATCHES=""
