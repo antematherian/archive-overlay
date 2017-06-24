@@ -6,7 +6,7 @@ MY_PV="${PV/0/A}"
 
 DESCRIPTION="Intel (R) Wireless WiFi Link 5100/5300 ucode"
 HOMEPAGE="http://linuxwireless.org/en/users/Drivers/iwlwifi"
-SRC_URI="http://linuxwireless.org/en/users/Drivers/iwlwifi/${MY_PN}-${MY_PV}.tgz"
+SRC_URI="http://linuxwireless.org/attachments/en/users/Drivers/iwlwifi/${MY_PN}-${MY_PV}.tgz"
 
 LICENSE="ipw3945"
 SLOT="1"

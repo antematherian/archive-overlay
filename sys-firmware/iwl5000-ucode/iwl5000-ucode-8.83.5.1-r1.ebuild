@@ -9,7 +9,7 @@ MY_PV="${PV}-1"
 
 DESCRIPTION="Intel (R) Wireless WiFi Link 5100/5300 ucode"
 HOMEPAGE="http://linuxwireless.org/en/users/Drivers/iwlwifi"
-SRC_URI="http://linuxwireless.org/en/users/Drivers/iwlwifi/${MY_PN}-${MY_PV}.tar.gz"
+SRC_URI="http://linuxwireless.org/attachments/en/users/Drivers/iwlwifi/${MY_PN}-${MY_PV}.tgz"
 
 LICENSE="ipw3945"
 SLOT="2"
@@ -17,7 +17,7 @@ KEYWORDS="amd64 x86"
 IUSE=""
 RDEPEND="!=${CATEGORY}/${P}"
 
-S="${WORKDIR}/${MY_PN}-${MY_PV}"
+S="${WORKDIR}/${MY_PN}-${PV}"
 
 pkg_pretend() {
 	if kernel_is lt 2 6 38; then
