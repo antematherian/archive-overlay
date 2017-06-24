@@ -89,8 +89,9 @@ pkg_setup() {
 #PATCHES=( "${FILESDIR}"/portage-revert-git-sync.patch )
 
 PATCHES=(
-	"${FILESDIR}/${PN}-add-sync-branch.patch" 
 	"${FILESDIR}/${PN}-revert-git-sync.patch"
+	"${FILESDIR}/${PN}-add-sync-branch.patch" 
+	"${FILESDIR}/${PN}-add-ceresia-distfile-mirrors.patch"
 )
 python_prepare_all() {
 	distutils-r1_python_prepare_all
