@@ -1,0 +1,24 @@
+From 3a947fa318e50db950609d319523e495995b98f6 Mon Sep 17 00:00:00 2001
+From: Matthias Clasen <mclasen@redhat.com>
+Date: Wed, 23 Nov 2016 14:48:17 -0500
+Subject: [PATCH] menu: Don't leak check menu items
+
+Pointed out in
+https://bugzilla.gnome.org/show_bug.cgi?id=774686
+---
+ gtk/gtkmenu.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/gtk/gtkmenu.c b/gtk/gtkmenu.c
+index 7839098371..514dd676ad 100644
+--- a/gtk/gtkmenu.c
++++ b/gtk/gtkmenu.c
+@@ -3056,6 +3056,8 @@ static void gtk_menu_measure (GtkWidget      *widget,
+           max_toggle_size = indicator_width;
+ 
+           gtk_widget_destroy (menu_item);
++          g_object_ref_sink (menu_item);
++          g_object_unref (menu_item);
+         }
+ 
+       min_width += 2 * max_toggle_size + max_accel_width;

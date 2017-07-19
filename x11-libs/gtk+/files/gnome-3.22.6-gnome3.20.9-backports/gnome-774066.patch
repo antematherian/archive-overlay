@@ -1,0 +1,30 @@
+From 547970b0bc7b9f6d3fb9e828e84c8bfa6a79cf36 Mon Sep 17 00:00:00 2001
+From: Matthias Clasen <mclasen@redhat.com>
+Date: Thu, 10 Nov 2016 15:03:16 -0500
+Subject: [PATCH] headerbar: Don't leak widgets
+
+We were not properly freeing separators that we end up
+not using.
+
+https://bugzilla.gnome.org/show_bug.cgi?id=774066
+---
+ gtk/gtkheaderbar.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/gtk/gtkheaderbar.c b/gtk/gtkheaderbar.c
+index 592abe3d53..e630432b2e 100644
+--- a/gtk/gtkheaderbar.c
++++ b/gtk/gtkheaderbar.c
+@@ -458,8 +458,10 @@ _gtk_header_bar_update_window_buttons (GtkHeaderBar *bar)
+ 
+           if (n_children == 0)
+             {
+-              gtk_widget_destroy (box);
+-              gtk_widget_destroy (separator);
++              g_object_ref_sink (box);
++              g_object_unref (box);
++              g_object_ref_sink (separator);
++              g_object_unref (separator);
+               continue;
+             }
+ 

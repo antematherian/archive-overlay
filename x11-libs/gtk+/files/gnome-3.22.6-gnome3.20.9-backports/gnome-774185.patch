@@ -1,0 +1,61 @@
+From 5e19e06dcccafa9df83b01d6a1eb49cd0f542527 Mon Sep 17 00:00:00 2001
+From: Matthias Clasen <mclasen@redhat.com>
+Date: Thu, 10 Nov 2016 15:07:08 -0500
+Subject: [PATCH] Fix a copy-paste error
+
+Pointed out in https://bugzilla.gnome.org/show_bug.cgi?id=774185#c3
+---
+ gtk/gtkscrolledwindow.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gtk/gtkscrolledwindow.c b/gtk/gtkscrolledwindow.c
+index a662234506..0b5ec7091d 100644
+--- a/gtk/gtkscrolledwindow.c
++++ b/gtk/gtkscrolledwindow.c
+@@ -4295,7 +4295,7 @@ gtk_scrolled_window_unrealize (GtkWidget *widget)
+ 
+   gtk_widget_set_parent_window (priv->vscrollbar, NULL);
+   gtk_widget_unregister_window (widget, priv->vindicator.window);
+-  indicator_reset (&priv->hindicator);
++  indicator_reset (&priv->vindicator);
+ 
+   gtk_widget_unregister_window (widget, priv->view_window);
+   gdk_window_destroy (priv->view_window);
+From 3c27774a5d7251df9adc6c4d80071ac6f1153e17 Mon Sep 17 00:00:00 2001
+From: Matthias Clasen <mclasen@redhat.com>
+Date: Thu, 10 Nov 2016 15:16:05 -0500
+Subject: [PATCH] places sidebar: Don't leak a reference
+
+Pointed out in https://bugzilla.gnome.org/show_bug.cgi?id=774185
+---
+ gtk/gtkplacessidebar.c | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/gtk/gtkplacessidebar.c b/gtk/gtkplacessidebar.c
+index 33b3ded42b..46c65812b3 100644
+--- a/gtk/gtkplacessidebar.c
++++ b/gtk/gtkplacessidebar.c
+@@ -3484,15 +3484,15 @@ on_button_press_event (GtkWidget      *widget,
+                 "section_type", &section_type,
+                 NULL);
+ 
+-  if (section_type != SECTION_BOOKMARKS)
+-    return FALSE;
+-
+-  sidebar->drag_row = GTK_WIDGET (row);
+-  sidebar->drag_row_x = (gint)event->x;
+-  sidebar->drag_row_y = (gint)event->y;
++  if (section_type == SECTION_BOOKMARKS)
++    {
++      sidebar->drag_row = GTK_WIDGET (row);
++      sidebar->drag_row_x = (gint)event->x;
++      sidebar->drag_row_y = (gint)event->y;
+ 
+-  sidebar->drag_root_x = event->x_root;
+-  sidebar->drag_root_y = event->y_root;
++      sidebar->drag_root_x = event->x_root;
++      sidebar->drag_root_y = event->y_root;
++    }
+ 
+   g_object_unref (sidebar);
+ 

@@ -1,0 +1,105 @@
+From adabec7d2565ccd55940b3589e00407bcbf439a9 Mon Sep 17 00:00:00 2001
+From: Joaquim Rocha <jrocha@endlessm.com>
+Date: Thu, 1 Sep 2016 13:23:14 +0200
+Subject: [PATCH] listbox: Avoid crashing on page down if the list has few rows
+
+The code always assumed that getting a row at a certain 'y' was
+possible but if the list box has more empty space than rows then a
+valid row may not be retrieved.
+
+https://bugzilla.gnome.org/show_bug.cgi?id=770703
+---
+ gtk/gtklistbox.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/gtk/gtklistbox.c b/gtk/gtklistbox.c
+index 57d1f336e8..d86c2908cd 100644
+--- a/gtk/gtklistbox.c
++++ b/gtk/gtklistbox.c
+@@ -3041,10 +3041,11 @@ gtk_list_box_move_cursor (GtkListBox      *box,
+           height = gtk_widget_get_allocated_height (GTK_WIDGET (box));
+           end_y = CLAMP (start_y + page_size * count, 0, height - 1);
+           row = gtk_list_box_get_row_at_y (box, end_y);
+-          iter = ROW_PRIV (row)->iter;
+ 
+           if (row == priv->cursor_row)
+             {
++              iter = ROW_PRIV (row)->iter;
++
+               /* Move at least one row. This is important when the cursor_row's height is
+                * greater than page_size */
+               if (count < 0)
+From f9658a2faf6929889be7d7042b3d8ee46456fb85 Mon Sep 17 00:00:00 2001
+From: Joaquim Rocha <jrocha@endlessm.com>
+Date: Thu, 1 Sep 2016 13:25:23 +0200
+Subject: [PATCH] listbox: Select the last row on page down when there are few
+ rows
+
+When pressing page down doesn't retrieve a valid row (because the list
+box has few rows), the last visible one should be selected instead.
+
+https://bugzilla.gnome.org/show_bug.cgi?id=770703
+---
+ gtk/gtklistbox.c | 42 +++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 41 insertions(+), 1 deletion(-)
+
+diff --git a/gtk/gtklistbox.c b/gtk/gtklistbox.c
+index d86c2908cd..3adb904b53 100644
+--- a/gtk/gtklistbox.c
++++ b/gtk/gtklistbox.c
+@@ -2323,6 +2323,27 @@ gtk_list_box_get_next_visible (GtkListBox    *box,
+   return iter;
+ }
+ 
++static GSequenceIter *
++gtk_list_box_get_last_visible (GtkListBox    *box,
++                               GSequenceIter *iter)
++{
++  GSequenceIter *next = NULL;
++
++  if (g_sequence_iter_is_end (iter))
++    return NULL;
++
++  do
++    {
++      next = gtk_list_box_get_next_visible (box, iter);
++
++      if (!g_sequence_iter_is_end (next))
++        iter = next;
++    }
++  while (!g_sequence_iter_is_end (next));
++
++  return iter;
++}
++
+ static void
+ gtk_list_box_update_header (GtkListBox    *box,
+                             GSequenceIter *iter)
+@@ -3042,7 +3063,26 @@ gtk_list_box_move_cursor (GtkListBox      *box,
+           end_y = CLAMP (start_y + page_size * count, 0, height - 1);
+           row = gtk_list_box_get_row_at_y (box, end_y);
+ 
+-          if (row == priv->cursor_row)
++          if (!row)
++            {
++              GSequenceIter *cursor_iter;
++              GSequenceIter *next_iter;
++
++              /* A NULL row should only happen when the list box didn't
++               * have enough rows to fill its height and the user made
++               * a page movement down, so the count must be positive */
++              g_assert (count > 0);
++
++              cursor_iter = ROW_PRIV (priv->cursor_row)->iter;
++              next_iter = gtk_list_box_get_last_visible (box, cursor_iter);
++
++              if (next_iter)
++                {
++                  row = g_sequence_get (next_iter);
++                  end_y = ROW_PRIV (row)->y;
++                }
++            }
++          else if (row == priv->cursor_row)
+             {
+               iter = ROW_PRIV (row)->iter;
+ 

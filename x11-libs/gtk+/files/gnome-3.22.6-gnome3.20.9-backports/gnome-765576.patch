@@ -1,0 +1,49 @@
+From 0e14456f15412b1245cc8dab7df7021793d44441 Mon Sep 17 00:00:00 2001
+From: Emmanuele Bassi <ebassi@gnome.org>
+Date: Tue, 26 Apr 2016 09:10:03 +0100
+Subject: [PATCH] gdk: Ensure resources registration happens once
+
+Like GTK does it.
+
+https://bugzilla.gnome.org/show_bug.cgi?id=765576
+
+Funtoo Maintainer Note: The below patch has been modified to correctly
+patch gnome-3.20.9-r1.ebuild. The contents of the patches are equivalent
+to the git commit. The original patch author comment has been kept.
+
+---
+
+--- a/gdk/gdk.c	2016-03-26 02:46:38.000000000 +0000
++++ b/gdk/gdk.c	2017-07-19 02:33:36.268018681 +0000
+@@ -266,6 +266,22 @@
+   gdk_add_option_entries (group);
+ }
+ 
++static gpointer
++register_resources (gpointer dummy G_GNUC_UNUSED)
++{
++  _gdk_register_resource ();
++
++  return NULL;
++}
++
++static void
++gdk_ensure_resources (void)
++{
++  static GOnce register_resources_once = G_ONCE_INIT;
++
++  g_once (&register_resources_once, register_resources, NULL);
++}
++
+ void
+ gdk_pre_parse (void)
+ {
+@@ -274,6 +290,8 @@
+ 
+   gdk_initialized = TRUE;
+ 
++  gdk_ensure_resources ();
++
+   /* We set the fallback program class here, rather than lazily in
+    * gdk_get_program_class, since we don't want -name to override it.
+    */

@@ -1,0 +1,31 @@
+From 1d04bdf845c5418748af8f2b34a6fb718536580f Mon Sep 17 00:00:00 2001
+From: Carlos Garnacho <carlosg@gnome.org>
+Date: Tue, 17 May 2016 19:27:00 +0200
+Subject: [PATCH] x11/dnd: Ignore grab broken events from other devices than
+ our DnD device.
+
+The GdkDragContext should only listen to GDK_GRAB_BROKEN events sent to
+its own pointer device. It turns out that the passive key grabs mistake
+GDK into sending a GdkEventGrabBroken on the master keyboard, which the
+DnD machinery mistakes as a signal to cancel the operation.
+
+https://bugzilla.gnome.org/show_bug.cgi?id=766442
+---
+ gdk/x11/gdkdnd-x11.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/gdk/x11/gdkdnd-x11.c b/gdk/x11/gdkdnd-x11.c
+index c433b173ab..439981853c 100644
+--- a/gdk/x11/gdkdnd-x11.c
++++ b/gdk/x11/gdkdnd-x11.c
+@@ -3042,6 +3042,10 @@ gdk_dnd_handle_grab_broken_event (GdkDragContext           *context,
+       event->grab_window == x11_context->ipc_window)
+     return FALSE;
+ 
++  if (gdk_event_get_device ((GdkEvent *) event) !=
++      gdk_drag_context_get_device (context))
++    return FALSE;
++
+   gdk_drag_context_cancel (context, GDK_DRAG_CANCEL_ERROR);
+   return TRUE;
+ }

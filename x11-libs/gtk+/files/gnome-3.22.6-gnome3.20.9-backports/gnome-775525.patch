@@ -1,0 +1,23 @@
+From 1f7b03bb2b11038deffe54b57f14eedc6d90f575 Mon Sep 17 00:00:00 2001
+From: Debarshi Ray <debarshir@gnome.org>
+Date: Fri, 2 Dec 2016 16:38:05 +0100
+Subject: [PATCH] flowbox: Fix get_child_at_index crash with an invalid index
+
+https://bugzilla.gnome.org/show_bug.cgi?id=775525
+---
+ gtk/gtkflowbox.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gtk/gtkflowbox.c b/gtk/gtkflowbox.c
+index 38a528b632..66535af4e1 100644
+--- a/gtk/gtkflowbox.c
++++ b/gtk/gtkflowbox.c
+@@ -4272,7 +4272,7 @@ gtk_flow_box_get_child_at_index (GtkFlowBox *box,
+   g_return_val_if_fail (GTK_IS_FLOW_BOX (box), NULL);
+ 
+   iter = g_sequence_get_iter_at_pos (BOX_PRIV (box)->children, idx);
+-  if (iter)
++  if (!g_sequence_iter_is_end (iter))
+     return g_sequence_get (iter);
+ 
+   return NULL;
