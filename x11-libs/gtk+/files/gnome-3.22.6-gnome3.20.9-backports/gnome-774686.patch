@@ -5,20 +5,20 @@ Subject: [PATCH] menu: Don't leak check menu items
 
 Pointed out in
 https://bugzilla.gnome.org/show_bug.cgi?id=774686
----
- gtk/gtkmenu.c | 2 ++
- 1 file changed, 2 insertions(+)
 
-diff --git a/gtk/gtkmenu.c b/gtk/gtkmenu.c
-index 7839098371..514dd676ad 100644
---- a/gtk/gtkmenu.c
-+++ b/gtk/gtkmenu.c
-@@ -3056,6 +3056,8 @@ static void gtk_menu_measure (GtkWidget      *widget,
-           max_toggle_size = indicator_width;
+Funtoo maintainer note: patch has been rebased to correctly patch 
+gnome-3.20.9-r1.ebuild. The contents of the patch are equivalent
+to the git commit.
+
+---
+--- a/gtk/gtkmenu.c	2017-07-19 02:53:36.324025475 +0000
++++ b/gtk/gtkmenu.c	2017-07-19 02:54:36.028025813 +0000
+@@ -3136,6 +3136,8 @@
+       max_toggle_size = indicator_width;
  
-           gtk_widget_destroy (menu_item);
-+          g_object_ref_sink (menu_item);
-+          g_object_unref (menu_item);
-         }
+       gtk_widget_destroy (menu_item);
++      gtk_widget_ref_sink (menu_item);
++      gtk_object_unref (menu_item);
+     }
  
-       min_width += 2 * max_toggle_size + max_accel_width;
+   min_width += 2 * max_toggle_size + max_accel_width;

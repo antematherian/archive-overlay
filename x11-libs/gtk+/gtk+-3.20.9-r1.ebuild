@@ -153,7 +153,7 @@ src_prepare() {
 	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-774185.patch
 	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-774352.patch
 
-	#eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-774686.patch
+	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-774686.patch
 	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-774743.patch
 	#eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-775212.patch
 	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-775525.patch
