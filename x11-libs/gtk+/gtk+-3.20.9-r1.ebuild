@@ -139,24 +139,23 @@ src_prepare() {
 	#FL-3930: cherrypick commits up to gtk+-3.22.6 to fix some serious issues
 
 	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-765410.patch
-	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-765576.patch
+#	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-765576.patch
 	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-766442.patch
 	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-767849.patch
 
 	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-770703.patch
-	#eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-771242.patch
 	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-771568.patch
 	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-772859.patch
-
 	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-774046.patch
+
 	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-774066.patch
 	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-774185.patch
 	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-774352.patch
 
-	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-774686.patch
 	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-774743.patch
 	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-775212.patch
 	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-775525.patch
+
 	gnome2_src_prepare
 	eautoreconf
 }
