@@ -139,7 +139,6 @@ src_prepare() {
 	#FL-3930: cherrypick commits up to gtk+-3.22.6 to fix some serious issues
 
 	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-765410.patch
-#	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-765576.patch
 	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-766442.patch
 	eapply "${FILESDIR}"/gnome-3.22.6-gnome3.20.9-backports/gnome-767849.patch
 
