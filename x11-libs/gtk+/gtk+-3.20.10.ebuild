@@ -137,7 +137,6 @@ src_prepare() {
 	eapply "${FILESDIR}"/${PN}-3.16.2-remove_update-icon-cache.patch
 
 	#FL-3930: cherrypick commits up to gtk+-3.22.6 to fix some serious issues
-	eapply "${FILESDIR}/${PN}"-3.20.10-gnome-765410.patch
 	eapply "${FILESDIR}/${PN}"-3.20.10-gnome-767849.patch
 	eapply "${FILESDIR}/${PN}"-3.20.10-gnome-772859.patch
 
